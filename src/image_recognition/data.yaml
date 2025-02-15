@@ -1,6 +1,5 @@
 train: data/images/train
 val: data/images/val
-test: data/images/test
 
 nc: 42
 names: ['b_one','b_two','b_three','b_four','b_five','b_six','b_seven','b_eight','b_nine',
