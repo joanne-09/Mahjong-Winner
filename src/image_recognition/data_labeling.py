@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 
-data_path = "data/original/tiles-resized"
-output_path = "data/original/labeled"
-labels = "data/original/tiles-data/data.csv"
+data_path = "datasets/original/tiles-resized"
+output_path = "datasets/original/labeled"
+labels = "datasets/original/tiles-data/data.csv"
 
 label_data = pd.read_csv(labels)
 

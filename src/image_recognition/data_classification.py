@@ -2,9 +2,10 @@ import os
 import shutil
 import random
 
-original_data = "data/original/augmented/"
-image_data = "data/images/"
-label_data = "data/labels/"
+src = "datasets/"
+original_data = "datasets/original/augmented/"
+image_data = "datasets/images/"
+label_data = "datase/labels/"
 
 # All the image files
 image_files = os.listdir(os.path.join(original_data, "images"))
@@ -24,8 +25,8 @@ def move_files(files, direction):
         file_name = os.path.split(file)[-1]
         image_src = os.path.join(original_data, "images", file_name)
         label_src = os.path.join(original_data, "labeled", file_name.replace(".jpg", ".txt"))
-        image_dest = os.path.join(image_data, direction, file_name)
-        label_dest = os.path.join(label_data, direction, file_name.replace(".jpg", ".txt"))
+        image_dest = os.path.join(src, direction, "images", file_name)
+        label_dest = os.path.join(src, direction, "labels", file_name.replace(".jpg", ".txt"))
         
         shutil.move(image_src, image_dest)
         shutil.move(label_src, label_dest)

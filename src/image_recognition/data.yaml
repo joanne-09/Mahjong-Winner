@@ -1,8 +1,9 @@
-train: data/images/train
-val: data/images/val
+train: datasets/train
+val: datasets/val
 
-nc: 42
-names: ['b_one','b_two','b_three','b_four','b_five','b_six','b_seven','b_eight','b_nine',
+nc: 43
+names: ['blank',
+        'b_one','b_two','b_three','b_four','b_five','b_six','b_seven','b_eight','b_nine',
         's_one','s_two','s_three','s_four','s_five','s_six','s_seven','s_eight','s_nine',
         'w_one','w_two','w_three','w_four','w_five','w_six','w_seven','w_eight','w_nine',
         'east','south','west','north','zong','fa','bai',

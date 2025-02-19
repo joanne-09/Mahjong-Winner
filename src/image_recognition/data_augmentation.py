@@ -18,12 +18,12 @@ image_width = 1024
 
 # Set the path to the background images
 background_fn = "backgrounds.pck"
-bg_path = "data/original/bg_img"
+bg_path = "datasets/original/bg_img"
 bg_images = []
 
 # Set the path to the images and the output directory
-image_path = "data/original/tiles-resized"  # Path to the images
-output_path = "data/original/augmented"  # Path to the output directory
+image_path = "datasets/original/tiles-resized"  # Path to the images
+output_path = "datasets/original/augmented"  # Path to the output directory
 filenames = {}  # Get the list of filenames
 
 # Create the output directory if it does not exist
@@ -54,7 +54,7 @@ class Backgrounds():
 backgrounds = Backgrounds()
 
 # Load the labels of the images
-labels = "data/original/tiles-data/data.csv"
+labels = "datasets/original/tiles-data/data.csv"
 tile_types = {}
 with open(labels, newline='') as csvfile:
     table = csv.reader(csvfile, delimiter=' ')
