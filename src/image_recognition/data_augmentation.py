@@ -30,12 +30,15 @@ filenames = {}  # Get the list of filenames
 os.makedirs(output_path, exist_ok=True)
 
 # Load background images
-print("Loading images...")
-for subdir in glob(bg_path+"/*"):
-    for f in glob(subdir+"/*.jpg"):
-        bg_images.append(mpimg.imread(f))
-pickle.dump(bg_images, open(background_fn, 'wb'))
-print("Finish Loading background images")
+if not os.path.exists(background_fn):
+    print("Loading background images...")
+    for subdir in glob(bg_path+"/*"):
+        for f in glob(subdir+"/*.jpg"):
+            bg_images.append(mpimg.imread(f))
+    pickle.dump(bg_images, open(background_fn, 'wb'))
+    print("Finish Loading background images")
+else:
+    print("Background images already loaded")
 
 
 class Backgrounds():

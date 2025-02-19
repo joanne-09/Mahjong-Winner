@@ -1,17 +1,13 @@
 from ultralytics import YOLO
+import yaml
+
+# Load the config
+config_path = "configs/train3.yaml"
+with open(config_path, "r") as file:
+    config = yaml.load(file, Loader=yaml.FullLoader)
 
 # Load the model
-model_path = "runs/detect/train3/last.pt"
-model = YOLO(model_path)
+model = YOLO(config["model"])
 
 # Train the model
-train_results = model.train(
-    data="data.yaml",
-    epochs=5,
-    batch=16,
-    imgsz=1024,
-    device="cpu",
-)
-
-# Evaluate the model
-metrics = model.val()
+train_results = model.train(**config)

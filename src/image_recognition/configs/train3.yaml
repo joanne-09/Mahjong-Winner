@@ -1,0 +1,7 @@
+model: "runs/detect/train3/weights/best.pt"
+data: "data.yaml"
+epochs: 5
+batch: 16
+imgsz: 1024
+device: "cpu"
+resume: True

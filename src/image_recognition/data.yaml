@@ -1,5 +1,5 @@
-train: datasets/train
-val: datasets/val
+train: train
+val: val
 
 nc: 43
 names: ['blank',
