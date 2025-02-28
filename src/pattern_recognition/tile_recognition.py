@@ -8,12 +8,23 @@ def tile_recognition(image_path):
     # Detect the tiles in the image
     results = model(image_path, conf=0.5)
 
+    # Initialize the lists
+    bing = bamboo = wan = words = bonus = []
+
     # Extract the bounding boxes and labels
     for result in results:
-        bing = filter(lambda x: x.cls <= 9 and x.cls >= 1, result.boxes)
-        bamboo = filter(lambda x: x.cls <= 18 and x.cls >= 10, result.boxes)
-        wan = filter(lambda x: x.cls <= 27 and x.cls >= 19, result.boxes)
-        words = filter(lambda x: x.cls <= 34 and x.cls >= 28, result.boxes)
-        bonus = filter(lambda x: x.cls <= 42 and x.cls >= 35, result.boxes)
+        for box in result.boxes:
+            cls = int(box.cls)
+
+            if cls <= 9 and cls >= 1:
+                bing.append(cls)
+            elif cls <= 18 and cls >= 10:
+                bamboo.append(cls)
+            elif cls <= 27 and cls >= 19:
+                wan.append(cls)
+            elif cls <= 34 and cls >= 28:
+                words.append(cls)
+            elif cls <= 42 and cls >= 35:
+                bonus.append(cls)
     
     return bing, bamboo, wan, words, bonus
