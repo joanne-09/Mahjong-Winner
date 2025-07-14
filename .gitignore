@@ -3,3 +3,5 @@ src/image_recognition/datasets.zip
 src/image_recognition/backgrounds.pck
 src/image_recognition/runs/*
 src/image_recognition/yolo11n.pt
+
+__pycache__/

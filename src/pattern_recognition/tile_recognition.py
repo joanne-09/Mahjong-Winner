@@ -1,7 +1,9 @@
 from ultralytics import YOLO
+import os
 
 # Load the model
-model_path = "../image_recognition/runs/detect/weight/last.pt"
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(_this_dir, "..", "image_recognition", "runs", "detect", "train3", "weights", "last.pt")
 model = YOLO(model_path)
 
 def tile_recognition(image_path):
@@ -9,7 +11,11 @@ def tile_recognition(image_path):
     results = model(image_path, conf=0.5)
 
     # Initialize the lists
-    bing = bamboo = wan = words = bonus = []
+    bing = []     # 1-9
+    bamboo = []  # 10-18
+    wan = []     # 19-27
+    words = []   # 28-34
+    bonus = []   # 35-42
 
     # Extract the bounding boxes and labels
     for result in results:

@@ -1,5 +1,5 @@
-from ../tile_generation/main import tile_translation, tile_number
-from tile_recognition import tile_recognition
+from ..tile_generation.main import tile_translation, tile_number
+from .tile_recognition import tile_recognition
 
 from collections import Counter
 
