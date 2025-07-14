@@ -27,3 +27,22 @@ def tile_generation(tiles):
         print("Generated image saved as", output_path)
     else:
         print("No tiles to generate")
+
+
+def tile_translation(tile):
+    """
+    Translate tile number to its name.
+    """
+    if tile > 0 and tile < 43:
+        return index[tile]
+    else:
+        return "Invalid tile type"
+
+def tile_number(tile):
+    """
+    Translate tile name to its number.
+    """
+    if tile in index:
+        return index.index(tile)
+    else:
+        return 0  # Invalid tile name
