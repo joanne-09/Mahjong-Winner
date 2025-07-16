@@ -9,7 +9,7 @@ index = ['blank',
         'east','south','west','north','zong','fa','bai',
         'spring','summer','autumn','winter','plum','orchid','chrysanthemum','bamboo',]
 tile_path = os.path.join(_this_dir, "assets/")
-output_path = "output.png"
+output_path = os.path.join(_this_dir, "../../static/outputs/output.png")
 
 def tile_generation(tiles):
     # Load images based on the tile types

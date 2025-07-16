@@ -9,7 +9,7 @@ words_index = ['east', 'south', 'west', 'north']
 
 # Final result of the game
 final_money = {"east": 0, "south": 0, "west": 0, "north": 0}
-final_breakdown = None
+final_breakdown = []
 
 def check_win_condition(bing, bamboo, wan, words, bonus, others=None) -> tuple[dict, list]:
     """
@@ -30,26 +30,36 @@ def check_win_condition(bing, bamboo, wan, words, bonus, others=None) -> tuple[d
     global final_breakdown, final_money
     shun = dui = ke = 0
 
+    breakdown = []
+
     # Check the words first 28-34
     for x in range(28, 35):
         cnt = words.count(x)
         if cnt >= 3:
             ke += 1
+            breakdown.append(("ke", x, x, x))
         elif cnt == 2:
             dui += 1
+            breakdown.append(("dui", x, x))
     
     # Check shun and ke and eliminate dui first
     tile_count = Counter(bing + bamboo + wan)
     if dui == 0:
         # Try every possible dui
+        print("PATTERN RECOGNITION: Try to form a dui first")
         for tile in tile_count:
             if tile_count[tile] >= 2:
                 temp_count = tile_count.copy()
                 temp_count[tile] -= 2
 
-                breakdown = [("dui", tile, tile)]
+                breakdown.append(("dui", tile, tile))
                 check_sets(temp_count, breakdown, bonus, others, shun, ke)
-    
+                breakdown.pop()
+    else:
+        print("PATTERN RECOGNITION: Already has a dui and form ke and shun instead")
+        for tile in tile_count:
+            check_sets(tile_count, breakdown, bonus, others, shun, ke)
+
     return final_money, final_breakdown
 
 
@@ -76,10 +86,13 @@ def check_sets(tile_count, breakdown, bonus, others=None, shun=0, ke=0) -> None:
         if tmp_money[others["seat"]] > final_money[others["seat"]]:
             final_money = tmp_money
             final_breakdown = breakdown.copy()
+        
+        print("PATTERN RECOGNITION: Form a winning hand...")
         return
     
     # If no tiles left but not enough sets, return False
     if shun + ke == 5 or sum(tile_count.values()) == 0:
+        print("PATTERN RECOGNITION: Unable to form winning hand because of tile lacking")
         return
 
     # Find first available tile to form a shun or ke

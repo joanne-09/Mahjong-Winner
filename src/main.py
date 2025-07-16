@@ -16,7 +16,27 @@ others = {
 }
 _this_dir = os.path.dirname(os.path.abspath(__file__))
 
-if __name__ == "__main__":    
+def backend_main():
+    bing = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    bamboo = [10, 11, 12, 10, 11, 12, 10, 11]
+    wan = []
+    words = []
+    bonus = []
+
+    # Recognize the tiles
+    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus, others)
+
+    # Generate picture of the winning tiles
+    print("Generating winning tiles image...")
+    print("final_breakdown: ", final_breakdown)
+    tiles = unpackage_breakdown_list(final_breakdown)
+    tile_generation(tiles)
+
+    return final_money, final_breakdown
+
+
+# Core logic of backend
+def final_backend_main(): 
     # Recognize the tiles
     image_path = os.path.join(_this_dir, "test.png")
 
@@ -37,7 +57,7 @@ if __name__ == "__main__":
     
     # Check the winning condition
     print("Checking win condition and money count...")
-    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus)
+    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus, others)
 
     print(f"Final money: {final_money}")
     print(f"Final breakdown: {final_breakdown}")
@@ -46,3 +66,8 @@ if __name__ == "__main__":
     print("Generating winning tiles image...")
     tiles = unpackage_breakdown_list(final_breakdown)
     tile_generation(tiles)
+
+    return final_money, final_breakdown
+
+if __name__ == "__main__":
+    final_money, final_breakdown = backend_main()

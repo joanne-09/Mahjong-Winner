@@ -4,8 +4,7 @@ from flask import Flask, request, render_template, redirect, url_for
 from werkzeug.utils import secure_filename
 
 # Import your core functions from the src package
-from src.pattern_recognition.tile_recognition import tile_recognition
-from src.pattern_recognition.main import check_win_condition
+from src.main import backend_main
 
 # --- Flask App Configuration ---
 UPLOAD_FOLDER = 'static/uploads'
@@ -36,18 +35,14 @@ def upload_file():
             file.save(image_path)
 
             # --- Call Your Backend Logic ---
-            print(f"Recognizing tiles in {image_path}")
-            bing, bamboo, wan, words, bonus = tile_recognition(image_path)
-
-            print("Checking win condition...")
-            # You might need to pass the 'others' dictionary here if your function requires it
-            final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus)
+            final_money, final_breakdown = backend_main()
             
             # --- Render the Results Page ---
+            output_filename = "./outputs/output.png"
             return render_template('result.html', 
                                    money=final_money, 
                                    breakdown=final_breakdown, 
-                                   image_file=filename)
+                                   image_file=output_filename)
 
     # For a GET request, just show the upload form
     return render_template('index.html')
