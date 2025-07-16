@@ -1,3 +1,4 @@
+from copy import deepcopy
 from ..tile_generation.main import tile_translation, tile_number
 from .tile_recognition import tile_recognition
 
@@ -49,7 +50,7 @@ def check_win_condition(bing, bamboo, wan, words, bonus, others=None) -> tuple[d
         print("PATTERN RECOGNITION: Try to form a dui first")
         for tile in tile_count:
             if tile_count[tile] >= 2:
-                temp_count = tile_count.copy()
+                temp_count = deepcopy(tile_count)
                 temp_count[tile] -= 2
 
                 breakdown.append(("dui", tile, tile))
@@ -85,8 +86,8 @@ def check_sets(tile_count, breakdown, bonus, others=None, shun=0, ke=0) -> None:
         tmp_money = check_winning_money(breakdown, bonus, others)
         if tmp_money[others["seat"]] > final_money[others["seat"]]:
             final_money = tmp_money
-            final_breakdown = breakdown.copy()
-        
+            final_breakdown = deepcopy(breakdown)
+
         print("PATTERN RECOGNITION: Form a winning hand...")
         return
     
@@ -97,12 +98,12 @@ def check_sets(tile_count, breakdown, bonus, others=None, shun=0, ke=0) -> None:
 
     # Find first available tile to form a shun or ke
     for tile in list(tile_count.keys()):
-        if tile_count[tile] > 0:
-            break
+        if tile_count[tile] <= 0:
+            continue
     
         # Try to form a ke
         if tile_count[tile] >= 3:
-            temp_count = tile_count.copy()
+            temp_count = deepcopy(tile_count)
             temp_count[tile] -= 3
 
             if temp_count[tile] == 0:
@@ -124,7 +125,7 @@ def check_sets(tile_count, breakdown, bonus, others=None, shun=0, ke=0) -> None:
                 next2 = tile + 2
 
                 if next1 in tile_count and next2 in tile_count:
-                    temp_count = tile_count.copy()
+                    temp_count = deepcopy(tile_count)
                     temp_count[tile] -= 1
                     temp_count[next1] -= 1
                     temp_count[next2] -= 1
@@ -230,7 +231,7 @@ def check_winning_money(breakdown, bonus, others=None) -> dict:
     if others["round"] in other_types["word"]:
         tai_count += 1
     # Check if the player has words of the seat
-    current_seat = (words_index[others["seat"]] - words_index[others["dealer"]] + 4) % 4
+    current_seat = (words_index.index(others["seat"]) - words_index.index(others["dealer"]) + 4) % 4
     if words_index[current_seat] in other_types["word"]:
         tai_count += 1
     # Check if the player has bonus spring, summer, autumn, winter
