@@ -1,6 +1,6 @@
 import os
 from .pattern_recognition.tile_recognition import tile_recognition
-from .pattern_recognition.main import check_win_condition
+from .pattern_recognition.main import check_win_condition, unpackage_breakdown_list
 from .tile_generation.main import tile_generation
 
 others = {
@@ -41,3 +41,8 @@ if __name__ == "__main__":
 
     print(f"Final money: {final_money}")
     print(f"Final breakdown: {final_breakdown}")
+
+    # Generate picture of the winning tiles
+    print("Generating winning tiles image...")
+    tiles = unpackage_breakdown_list(final_breakdown)
+    tile_generation(tiles)

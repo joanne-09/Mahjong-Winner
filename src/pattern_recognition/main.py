@@ -290,3 +290,22 @@ def check_winning_money(breakdown, bonus, others=None) -> dict:
         money[others["wins"]] -= (others["base"] + others["bonus"] * tai_count)
 
     return money
+
+
+# Unpackage the breakdown list to a more usable format
+def unpackage_breakdown_list(breakdown: list) -> list:
+    """
+    Unpackage the breakdown list to a more readable format.
+    Parameters:
+        breakdown: list of tuple, the breakdown of the winning hand.
+    Returns:
+        unpackaged_breakdown: list of int, the unpackaged breakdown.
+    """
+    unpackaged_breakdown = []
+    for item in breakdown:
+        if item[0] == "dui":
+            unpackaged_breakdown.extend([item[1], item[2]])
+        else:
+            unpackaged_breakdown.extend([item[1], item[2], item[3]])
+    
+    return unpackaged_breakdown
