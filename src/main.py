@@ -36,12 +36,10 @@ def backend_main():
 
 
 # Core logic of backend
-def final_backend_main(): 
+def final_backend_main(file_path: str): 
     # Recognize the tiles
-    image_path = os.path.join(_this_dir, "test.png")
-
-    print("Recognizing tiles in", image_path)
-    bing, bamboo, wan, words, bonus = tile_recognition(image_path)
+    print("Recognizing tiles in", file_path)
+    bing, bamboo, wan, words, bonus = tile_recognition(file_path)
 
     # Print the recognized tiles to check
     # print(f"Bing tiles: {bing}")
@@ -70,4 +68,4 @@ def final_backend_main():
     return final_money, final_breakdown
 
 if __name__ == "__main__":
-    final_money, final_breakdown = backend_main()
+    final_money, final_breakdown = final_backend_main("test.png")

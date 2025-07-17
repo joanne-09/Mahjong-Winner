@@ -3,11 +3,12 @@ import os
 
 # Load the model
 _this_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(_this_dir, "..", "image_recognition", "runs", "detect", "train3", "weights", "last.pt")
+model_path = os.path.join(_this_dir, "..", "image_recognition", "runs", "detect", "train", "weights", "best.pt")
 model = YOLO(model_path)
 
 def tile_recognition(image_path):
     # Detect the tiles in the image
+    print("TILE RECOGNITION: Detecting tiles in", image_path)
     results = model(image_path, conf=0.5)
 
     # Initialize the lists
