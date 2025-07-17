@@ -1,6 +1,6 @@
-model: "runs/detect/train3/weights/best.pt"
+model: "runs/detect/train/weights/last.pt"
 data: "data.yaml"
-epochs: 5
+epochs: 20
 batch: 16
 imgsz: 1024
 device: "cpu"
