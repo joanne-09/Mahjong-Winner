@@ -10,8 +10,9 @@ index = ['blank',
         'spring','summer','autumn','winter','plum','orchid','chrysanthemum','bamboo',]
 tile_path = os.path.join(_this_dir, "assets/")
 output_path = os.path.join(_this_dir, "../../static/outputs/output.png")
+debug_path = os.path.join(_this_dir, "debug.png")
 
-def tile_generation(tiles):
+def tile_generation(tiles, output=False):
     # Load images based on the tile types
     images = []
     for tile in tiles:
@@ -25,8 +26,13 @@ def tile_generation(tiles):
     if images:
         final_image = cv2.hconcat(images)
 
-        cv2.imwrite(output_path, final_image)
-        print("Generated image saved as", output_path)
+        if output:
+            # Save the final image to the specified output path
+            cv2.imwrite(output_path, final_image)
+            print("Generated image saved as", output_path)
+        else:
+            cv2.imwrite(debug_path, final_image)
+            print("Generated image saved as", debug_path)
     else:
         print("No tiles to generate")
 

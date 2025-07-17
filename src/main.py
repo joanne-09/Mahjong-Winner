@@ -30,7 +30,7 @@ def backend_main():
     print("Generating winning tiles image...")
     print("final_breakdown: ", final_breakdown)
     tiles = unpackage_breakdown_list(final_breakdown)
-    tile_generation(tiles)
+    tile_generation(tiles, output=True)
 
     return final_money, final_breakdown
 
@@ -53,7 +53,7 @@ def final_backend_main():
     # Generate picture of tiles
     print("Generating virtual tile image...")
     tiles = bing + bamboo + wan + words + bonus
-    tile_generation(tiles)
+    tile_generation(tiles, output=False)
     
     # Check the winning condition
     print("Checking win condition and money count...")
@@ -65,7 +65,7 @@ def final_backend_main():
     # Generate picture of the winning tiles
     print("Generating winning tiles image...")
     tiles = unpackage_breakdown_list(final_breakdown)
-    tile_generation(tiles)
+    tile_generation(tiles, output=True)
 
     return final_money, final_breakdown
 
