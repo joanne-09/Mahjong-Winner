@@ -4,10 +4,10 @@ src/image_recognition/backgrounds.pck
 src/image_recognition/yolo11n.pt
 
 # Ignore all run files except the final model weights
-src/image_recognition/runs/
-!src/image_recognition/runs/detect/train3/weights/
-!src/image_recognition/runs/detect/train3/weights/*
-!src/image_recognition/runs/detect/train/weights/*
+src/image_recognition/runs/detect/*
+!src/image_recognition/runs/detect/
+!src/image_recognition/runs/detect/train/
+src/image_recognition/runs/detect/train/*
 !src/image_recognition/runs/detect/train/weights/
 
 __pycache__/
