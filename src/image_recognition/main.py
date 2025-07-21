@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import yaml
 
 # Load the config
-config_path = "configs/train3.yaml"
+config_path = "configs/train2.yaml"
 with open(config_path, "r") as file:
     config = yaml.load(file, Loader=yaml.FullLoader)
 

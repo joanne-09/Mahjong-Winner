@@ -1,17 +1,41 @@
-<!-- filepath: templates/result.html -->
 <!doctype html>
-<title>Mahjong Winner</title>
-<h1>Analysis Results</h1>
+<head>
+    <title>Mahjong Winner - Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
+</head>
 
-<h3>Your Hand:</h3>
-<!-- <img src="{{ url_for('static', filename='uploads/' + image_file) }}" width="400"> -->
-<img src="{{ url_for('static', filename=image_file) }}" width="400">
+<body>
+    <div class="navbar">
+        <a href="/" class="brand">Mahjong Winner</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
+    </div>
 
-<h3>Final Money:</h3>
-<pre>{{ money }}</pre>
+    <div class="content">
+        <h1>Analysis Results</h1>
+        <div class="results-grid">
+            <div class="result-card">
+                <h3>Your Hand</h3>
+                <img src="{{ url_for('static', filename=uploaded_image) }}" alt="Uploaded Hand">
+            </div>
+            <div class="result-card">
+                <h3>Winning Breakdown</h3>
+                <img src="{{ url_for('static', filename=generated_image) }}" alt="Generated Winning Hand">
+            </div>
+        </div>
 
-<h3>Winning Breakdown:</h3>
-<pre>{{ breakdown }}</pre>
-
-<br>
-<a href="/">Analyze another hand</a>
+        <div class="result-details">
+            <div class="detail-card">
+                <h3>Breakdown Data</h3>
+                <pre>{{ breakdown }}</pre>
+            </div>
+            <div class="detail-card">
+                <h3>Final Money</h3>
+                <pre>{{ money }}</pre>
+            </div>
+        </div>
+    </div>
+</body>

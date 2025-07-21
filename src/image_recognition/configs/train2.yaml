@@ -1,0 +1,32 @@
+model: "runs/detect/train/weights/best.pt"
+data: "data.yaml"                # Dataset configuration
+epochs: 50                       # Increase epochs for better convergence
+batch: 32                        # Increase batch size if GPU memory allows
+imgsz: 640                       # Reduce image size for faster training (or keep 1024 for accuracy)
+device: "cpu"                    # Use GPU if available (change to "cpu" if no GPU)
+resume: False
+
+# Optimization parameters
+optimizer: "AdamW"               # Often better than SGD for object detection
+lr0: 0.001                       # Lower initial learning rate
+lrf: 0.01                        # Final learning rate factor
+momentum: 0.937                  # Momentum for SGD
+weight_decay: 0.0005             # Weight decay for regularization
+
+# Data augmentation
+hsv_h: 0.015                     # Hue augmentation
+hsv_s: 0.7                       # Saturation augmentation  
+hsv_v: 0.4                       # Value augmentation
+degrees: 0.0                     # Rotation degrees (set to 0 for tiles)
+translate: 0.1                   # Translation fraction
+scale: 0.5                       # Scaling factor
+shear: 0.0                       # Shearing degrees
+perspective: 0.0                 # Perspective factor
+flipud: 0.0                      # Vertical flip probability
+fliplr: 0.5                      # Horizontal flip probability
+mosaic: 1.0                      # Mosaic augmentation probability
+
+# Validation and saving
+val: True                        # Validate during training
+save_period: 2                  # Save checkpoint every N epochs
+patience: 10                     # Early stopping patience

@@ -1,0 +1,7 @@
+model: "runs/detect/train/weights/last.pt"
+data: "data.yaml"
+epochs: 20
+batch: 16
+imgsz: 1024
+device: "cpu"
+resume: True
