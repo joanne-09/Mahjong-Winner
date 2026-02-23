@@ -85,3 +85,52 @@ body {
 .upload-form input[type="submit"]:hover {
     background-color: #0056b3;
 }
+
+/* Settings Group Styling */
+.settings-group {
+    text-align: left;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.settings-group h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.setting-item label {
+    font-weight: 500;
+    color: #555;
+    margin-right: 15px;
+}
+
+.setting-item select,
+.setting-item input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 150px;
+    box-sizing: border-box;
+}
+
+.upload-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.upload-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: #555;
+}

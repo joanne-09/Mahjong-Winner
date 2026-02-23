@@ -159,7 +159,7 @@ def check_winning_money(breakdown, bonus, others=None) -> dict:
     money = {"east": 0, "south": 0, "west": 0, "north": 0}
 
     self_winning = False
-    dealer_winning = 0
+    dealer_money = 2 * others["continues"] - 1 if others is not None else 0
 
     # Check the winning money
     if breakdown is None:
@@ -168,13 +168,6 @@ def check_winning_money(breakdown, bonus, others=None) -> dict:
     # Check if someone fang chong, if self_winning then all other 3 players lose
     if others["seat"] == others["wins"]:
         self_winning = True
-    
-    # Check if the winning player is the host
-    if others is not None and others["dealer"] == others["seat"]:
-       dealer_winning = 2 * others["continues"] - 1
-    # Check if the host is the fong chong player or self_winning
-    elif others is not None and (others["wins"] == others["dealer"] or self_winning):
-        dealer_winning = -1 * (2 * others["continues"] - 1)
 
     # Check the breakdown
     tai_count = 0
@@ -290,15 +283,20 @@ def check_winning_money(breakdown, bonus, others=None) -> dict:
         tai_count += 8
     
     # Calculate the money based on the tai count and winning conditions
-    if self_winning:
-        for seat in words_index:
-            if seat == others["seat"]:
-                money[seat] += (others["base"] + others["bonus"] * (tai_count + others["continues"])) * 3
-            else:
-                money[seat] -= (others["base"] + others["bonus"] * (tai_count + others["continues"]))
-    elif others["wins"] == others["dealer"]:
-        money[others["seat"]] += (others["base"] + others["bonus"] * (tai_count + others["continues"]))
-        money[others["wins"]] -= (others["base"] + others["bonus"] * (tai_count + others["continues"]))
+    if self_winning and others["seat"] != others["dealer"]:
+        money[others["seat"]] += (others["base"] + others["bonus"] * tai_count) * 3 + others["bonus"] * dealer_money
+        for seat in ["east", "south", "west", "north"]:
+            if seat != others["seat"]:
+                money[seat] -= (others["base"] + others["bonus"] * tai_count)
+        money[others["dealer"]] -= others["bonus"] * dealer_money
+    elif self_winning and others["seat"] == others["dealer"]:
+        money[others["seat"]] += (others["base"] + others["bonus"] * (tai_count + dealer_money)) * 3
+        for seat in ["east", "south", "west", "north"]:
+            if seat != others["seat"]:
+                money[seat] -= (others["base"] + others["bonus"] * (tai_count + dealer_money))
+    elif others["wins"] == others["dealer"] or others["seat"] == others["dealer"]:
+        money[others["seat"]] += (others["base"] + others["bonus"] * (tai_count + dealer_money))
+        money[others["wins"]] -= (others["base"] + others["bonus"] * (tai_count + dealer_money))
     else:
         money[others["seat"]] += (others["base"] + others["bonus"] * tai_count)
         money[others["wins"]] -= (others["base"] + others["bonus"] * tai_count)

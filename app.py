@@ -4,7 +4,7 @@ from flask import Flask, request, render_template, redirect, url_for
 from werkzeug.utils import secure_filename
 
 # Import your core functions from the src package
-from src.main import final_backend_main
+from src.main import backend_main
 
 # --- Flask App Configuration ---
 UPLOAD_FOLDER = 'static/uploads'
@@ -35,7 +35,17 @@ def upload_file():
             file.save(image_path)
 
             # --- Call Your Backend Logic ---
-            final_money, final_breakdown = final_backend_main(image_path)
+            others = {
+                "round": request.form.get('round', 'east'),
+                "dealer": request.form.get('dealer', 'east'),
+                "continues": int(request.form.get('continues', 1)),
+                "dice": int(request.form.get('dice', 18)),
+                "seat": request.form.get('seat', 'east'),
+                "wins": request.form.get('wins', 'east'),
+                "base": int(request.form.get('base', 100)),
+                "bonus": int(request.form.get('bonus', 30)),
+            }
+            final_money, final_breakdown = backend_main(others)
             
             # --- Render the Results Page ---
             output_filename = "./outputs/output.png"

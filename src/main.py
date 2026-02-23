@@ -16,7 +16,10 @@ others = {
 }
 _this_dir = os.path.dirname(os.path.abspath(__file__))
 
-def backend_main():
+def backend_main(others_settings=None):
+    if others_settings is None:
+        others_settings = others
+
     bing = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     bamboo = [10, 11, 12, 10, 11, 12, 10, 11]
     wan = []
@@ -24,7 +27,7 @@ def backend_main():
     bonus = []
 
     # Recognize the tiles
-    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus, others)
+    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus, others_settings)
 
     # Generate picture of the winning tiles
     print("Generating winning tiles image...")
@@ -36,7 +39,10 @@ def backend_main():
 
 
 # Core logic of backend
-def final_backend_main(file_path: str): 
+def final_backend_main(file_path: str, others_settings=None): 
+    if others_settings is None:
+        others_settings = others
+
     # Recognize the tiles
     print("Recognizing tiles in", file_path)
     bing, bamboo, wan, words, bonus = tile_recognition(file_path)
@@ -55,7 +61,7 @@ def final_backend_main(file_path: str):
     
     # Check the winning condition
     print("Checking win condition and money count...")
-    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus, others)
+    final_money, final_breakdown = check_win_condition(bing, bamboo, wan, words, bonus, others_settings)
 
     print(f"Final money: {final_money}")
     print(f"Final breakdown: {final_breakdown}")

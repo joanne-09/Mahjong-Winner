@@ -1,6 +1,6 @@
 model: "runs/detect/train/weights/best.pt"
 data: "data.yaml"                # Dataset configuration
-epochs: 50                       # Increase epochs for better convergence
+epochs: 20                       # Increase epochs for better convergence
 batch: 32                        # Increase batch size if GPU memory allows
 imgsz: 640                       # Reduce image size for faster training (or keep 1024 for accuracy)
 device: "cpu"                    # Use GPU if available (change to "cpu" if no GPU)
@@ -28,5 +28,5 @@ mosaic: 1.0                      # Mosaic augmentation probability
 
 # Validation and saving
 val: True                        # Validate during training
-save_period: 2                  # Save checkpoint every N epochs
+save_period: 10                  # Save checkpoint every N epochs
 patience: 10                     # Early stopping patience
