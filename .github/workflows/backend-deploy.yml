@@ -7,27 +7,29 @@ on:
     paths:
       - 'backend/**'
       - 'requirements.txt'
-      - 'vercel.json'
-      - '.github/workflows/backend-deploy.yml'
-  pull_request:
-    branches:
-      - master
-    paths:
-      - 'backend/**'
-      - 'requirements.txt'
-      - 'vercel.json'
+      - 'Dockerfile'
       - '.github/workflows/backend-deploy.yml'
 
 jobs:
-  deploy-backend:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # Example of how you can build and push a Docker image to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}/mahjong-backend:latest
