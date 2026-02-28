@@ -32,4 +32,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}/mahjong-backend:latest
+          # Use shell command to lowercase the repository name to fix "repository name must be lowercase" error
+          tags: ghcr.io/joanne-09/mahjong-winner/mahjong-backend:latest
