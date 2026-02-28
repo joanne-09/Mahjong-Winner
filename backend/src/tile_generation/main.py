@@ -12,7 +12,7 @@ tile_path = os.path.join(_this_dir, "assets/")
 output_path = os.path.join(_this_dir, "../../static/outputs/output.png")
 debug_path = os.path.join(_this_dir, "debug.png")
 
-def tile_generation(tiles, output=False):
+def tile_generation(tiles, output=False, save_path=None):
     # Load images based on the tile types
     images = []
     for tile in tiles:
@@ -28,7 +28,8 @@ def tile_generation(tiles, output=False):
 
         if output:
             # Save the final image to the specified output path
-            cv2.imwrite(output_path, final_image)
+            final_output_path = save_path if save_path else output_path
+            cv2.imwrite(final_output_path, final_image)
             print("Generated image saved as", output_path)
         else:
             cv2.imwrite(debug_path, final_image)

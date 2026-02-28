@@ -1,5 +1,6 @@
 import React from 'react';
-import { AnalysisResult } from '../App';
+import type { AnalysisResult } from '../App';
+import { API_URL } from '../config';
 
 interface ResultsProps {
   result: AnalysisResult;
@@ -14,11 +15,11 @@ const Results: React.FC<ResultsProps> = ({ result, onReset }) => {
       <div className="results-grid">
         <div className="result-card">
           <h3>Your Hand</h3>
-          <img src={`http://localhost:5000${result.uploaded_image_url}`} alt="Uploaded Hand" />
+          <img src={`${API_URL}${result.uploaded_image_url}`} alt="Uploaded Hand" />
         </div>
         <div className="result-card">
           <h3>Winning Breakdown</h3>
-          <img src={`http://localhost:5000${result.generated_image_url}`} alt="Generated Winning Hand" />
+          <img src={`${API_URL}${result.generated_image_url}`} alt="Generated Winning Hand" />
         </div>
       </div>
 

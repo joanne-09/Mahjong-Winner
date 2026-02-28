@@ -1,0 +1,120 @@
+.lobby-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #1a1a2e;
+  padding: 20px;
+}
+
+.lobby-card {
+  background: #16213e;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+}
+
+.lobby-card h1 {
+  color: #fff;
+  margin-top: 0;
+}
+
+.lobby-card p {
+  color: #a0a0b0;
+  margin-bottom: 30px;
+}
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.create-btn {
+  background-color: #e94560;
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  box-shadow: 0 4px 6px rgba(233, 69, 96, 0.3);
+}
+
+.create-btn:hover {
+  background-color: #d13d56;
+}
+
+.create-btn:disabled, .join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  color: #6b6b80;
+  font-size: 0.9em;
+  margin: 10px 0;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #3a3a50;
+}
+
+.divider span {
+  padding: 0 10px;
+}
+
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.join-form input {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #3a3a50;
+  background: #0f172a;
+  color: white;
+  font-size: 1.2em;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.join-form input:focus {
+  outline: none;
+  border-color: #e94560;
+  box-shadow: 0 0 5px rgba(233, 69, 96, 0.5);
+}
+
+.join-btn {
+  background-color: #4a4e69;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.join-btn:hover {
+  background-color: #3f4259;
+}
+
+.error-text {
+  color: #ff6b6b !important;
+  font-size: 0.9em;
+  margin-top: 10px;
+}

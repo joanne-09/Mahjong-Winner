@@ -50,6 +50,11 @@ body {
   color: white;
 }
 
+.navbar .nav-links a.active {
+  background-color: #4caf50;
+  color: white;
+}
+
 /* Main content styling */
 .content {
   padding: 20px;

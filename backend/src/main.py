@@ -16,7 +16,7 @@ others = {
 }
 _this_dir = os.path.dirname(os.path.abspath(__file__))
 
-def backend_main(others_settings=None):
+def backend_main(others_settings=None, output_filename=None):
     if others_settings is None:
         others_settings = others
 
@@ -33,7 +33,15 @@ def backend_main(others_settings=None):
     print("Generating winning tiles image...")
     print("final_breakdown: ", final_breakdown)
     tiles = unpackage_breakdown_list(final_breakdown)
-    tile_generation(tiles, output=True)
+    
+    # Determine save path if filename is provided
+    save_path = None
+    if output_filename:
+        save_path = os.path.join(_this_dir, "..", "static", "outputs", output_filename)
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        
+    tile_generation(tiles, output=True, save_path=save_path)
 
     return final_money, final_breakdown
 
