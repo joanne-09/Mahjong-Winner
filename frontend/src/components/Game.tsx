@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { API_URL } from '../config';
 import './Game.css';
 import UploadForm from './UploadForm';
@@ -31,8 +31,6 @@ const Game = () => {
   const navigate = useNavigate();
   
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [gameStarted, setGameStarted] = useState(true);
 
   // Analyzer / Win Modal state
   const [showWinModal, setShowWinModal] = useState(false);
@@ -63,7 +61,6 @@ const Game = () => {
       
       // 2. Setup WebSocket
       const newSocket = io(API_URL);
-      setSocket(newSocket);
       
       newSocket.emit('join_game', { room_code: roomCode });
       
