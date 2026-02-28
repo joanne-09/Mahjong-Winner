@@ -3,20 +3,20 @@ name: Deploy Backend
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'backend/**'
       - 'requirements.txt'
       - 'vercel.json'
-      - '.github/workflows/deploy-backend.yml'
+      - '.github/workflows/backend-deploy.yml'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'backend/**'
       - 'requirements.txt'
       - 'vercel.json'
-      - '.github/workflows/deploy-backend.yml'
+      - '.github/workflows/backend-deploy.yml'
 
 jobs:
   deploy-backend:
