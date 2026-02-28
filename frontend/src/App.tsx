@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import './App.css';
 import { API_URL } from './config';
 import UploadForm from './components/UploadForm';
@@ -15,11 +15,12 @@ export interface AnalysisResult {
   generated_image_url: string;
 }
 
-function App() {
-  const [currentView, setCurrentView] = useState<'analyzer' | 'game'>('analyzer');
+// Inner component so we can use useLocation for styling navigation
+const AppContent = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
 
   const handleAnalyze = async (formData: FormData) => {
     setLoading(true);
@@ -38,19 +39,22 @@ function App() {
     }
   };
 
-  return (
-    <Router>
-      <div className="app-container">
-        <nav className="navbar">
-          <div className="brand">Mahjong Winner</div>
-          <div className="nav-links">
-            <Link to="/analyzer" className={currentView === 'analyzer' ? 'active' : ''} onClick={() => setCurrentView('analyzer')}>Analyzer</Link>
-            <Link to="/" className={currentView === 'game' ? 'active' : ''} onClick={() => setCurrentView('game')}>Game Tracker</Link>
-          </div>
-        </nav>
+  const isGameRoute = location.pathname.startsWith('/game');
 
-        <main className="content">
-          {currentView === 'analyzer' ? (
+  return (
+    <div className="app-container">
+      <nav className="navbar">
+        <div className="brand">Mahjong Winner</div>
+        <div className="nav-links">
+          <NavLink to="/" className={({ isActive }) => (isActive && !isGameRoute ? 'active' : '')} end>Analyzer</NavLink>
+          <NavLink to="/game" className={() => (isGameRoute ? 'active' : '')}>Game Tracker</NavLink>
+        </div>
+      </nav>
+
+      <main className="content">
+        <Routes>
+          {/* Analyzer Route */}
+          <Route path="/" element={
             !result ? (
               <>
                 <h1>Analyze Your Hand</h1>
@@ -61,15 +65,24 @@ function App() {
             ) : (
               <Results result={result} onReset={() => setResult(null)} />
             )
-          ) : (
-            <Routes>
-              <Route path="/" element={<Lobby />} />
-              <Route path="/game/:roomCode" element={<Game />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          )}
-        </main>
-      </div>
+          } />
+
+          {/* Game Routes */}
+          <Route path="/game" element={<Lobby />} />
+          <Route path="/game/:roomCode" element={<Game />} />
+          
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <Router basename="/Mahjong-Winner">
+      <AppContent />
     </Router>
   );
 }

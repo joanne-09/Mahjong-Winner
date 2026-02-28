@@ -52,7 +52,7 @@ const Game = () => {
         setGameState(response.data);
       } catch (err) {
         console.error("Game not found", err);
-        navigate('/');
+        navigate('/game');
       }
     };
     
@@ -70,7 +70,7 @@ const Game = () => {
 
       newSocket.on('game_ended', () => {
         alert('This game has been ended and recorded data deleted.');
-        navigate('/');
+        navigate('/game');
       });
       
       return () => {
