@@ -5,7 +5,7 @@ import random
 src = "datasets/"
 original_data = "datasets/original/augmented/"
 image_data = "datasets/images/"
-label_data = "datase/labels/"
+label_data = "datasets/labels/"
 
 # All the image files
 image_files = os.listdir(os.path.join(original_data, "images"))

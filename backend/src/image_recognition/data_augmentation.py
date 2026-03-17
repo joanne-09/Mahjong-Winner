@@ -121,33 +121,25 @@ def resize_tile(image, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(image, dim, interpolation=inter)
 
 # Generate the augmented image information
-def generate_images(grid_len=4):
-    grid_sz = grid_len * grid_len
-
+def generate_images(num_tiles=14):
     tile_images = []
     tile_labels = []
 
-    for grid_idx in range(grid_sz):
+    for _ in range(num_tiles):
         tile_label = random.choice(list(filenames.keys()))
         tile_paths = filenames[tile_label]
         tile_image = cv2.cvtColor(cv2.imread(
             image_path + "/" + random.choices(tile_paths, k=1)[0])
             , cv2.COLOR_RGB2RGBA).copy()
-
-        # Rotate the image
-        modified_image = rotate_tile(tile_image, random.randint(0, 359))
-        modified_image = resize_tile(modified_image, 
-                                    height=int(image_height/(grid_len*1.5)),
-                                    width=int(image_width/(grid_len*1.5)))
-        tile_images.append(modified_image)
+        tile_images.append(tile_image)
         tile_labels.append(tile_label)
     
     return (tile_images, tile_labels)
 
 # Generate the augmented image
-def generate_augmented_image(grid_len=4):
+def generate_augmented_image(num_tiles=14):
     # Generate the image information
-    (tile_images, tile_labels) = generate_images(grid_len)
+    (tile_images, tile_labels) = generate_images(num_tiles)
 
     # Randomly select the background image
     bg_image = backgrounds.get_random()
@@ -164,42 +156,111 @@ def generate_augmented_image(grid_len=4):
     with open(output_labels, "w") as file:
         pass
 
-    # Place the grid on the resized background image
-    for row_idx in range(grid_len):
-        for col_idx in range(grid_len):
-            index = row_idx * grid_len + col_idx
-            tile_image = tile_images[index]
-            tile_gray = cv2.cvtColor(tile_image, cv2.COLOR_BGR2GRAY)
-            _, alpha = cv2.threshold(tile_gray, 0, 255, cv2.THRESH_BINARY)
-            b, g, r, a = cv2.split(tile_image)
-            tile_image = cv2.merge([b, g, r, alpha], 4)
+    # Resize tiles so they fit nicely
+    target_height = int(image_height / 3)
+    resized_tiles = []
+    tile_widths = []
+    for tile_image in tile_images:
+        r_tile = resize_tile(tile_image, height=target_height)
+        resized_tiles.append(r_tile)
+        tile_widths.append(r_tile.shape[1])
+    
+    total_width = sum(tile_widths)
+    # Give some horizontal margin
+    if total_width > image_width * 0.9:
+        scale_down = (image_width * 0.9) / total_width
+        target_height = int(target_height * scale_down)
+        resized_tiles = []
+        tile_widths = []
+        for tile_image in tile_images:
+            r_tile = resize_tile(tile_image, height=target_height)
+            resized_tiles.append(r_tile)
+            tile_widths.append(r_tile.shape[1])
+        total_width = sum(tile_widths)
 
-            x_offset = int((col_idx / grid_len) * output_image.shape[1])
-            y_offset = int((row_idx / grid_len) * output_image.shape[0])
+    row_img = np.zeros((target_height, total_width, 4), dtype=np.uint8)
+    
+    x_offset = 0
+    tile_boxes = [] # (min_x, min_y, max_x, max_y) in row_img
+    for i, r_tile in enumerate(resized_tiles):
+        w = r_tile.shape[1]
+        row_img[:, x_offset:x_offset+w] = r_tile
+        tile_boxes.append((x_offset, 0, x_offset + w, target_height))
+        x_offset += w
 
-            x1, x2 = x_offset, x_offset + tile_image.shape[1]
-            y1, y2 = y_offset, y_offset + tile_image.shape[0]
+    angle = random.randint(0, 359)
+    # Get the rotation matrix
+    (h, w) = row_img.shape[:2]
+    (cX, cY) = (w // 2, h // 2)
 
-            alpha_s = tile_image[:, :, 3] / 255.0
-            alpha_l = 1.0 - alpha_s
+    matrix = cv2.getRotationMatrix2D((cX, cY), -angle, 1.0)
+    cos_val = np.abs(matrix[0, 0])
+    sin_val = np.abs(matrix[0, 1])
 
-            for c in range(0, 3):
-                output_image[y1:y2, x1:x2, c] = (alpha_s * tile_image[:, :, c] + \
-                                                 alpha_l * output_image[y1:y2, x1:x2, c])
-        
-            # Compute the value of relative coordinates
-            min_x = x1 / output_image.shape[1]
-            max_x = x2 / output_image.shape[1]
-            min_y = y1 / output_image.shape[0]
-            max_y = y2 / output_image.shape[0]
+    nW = int((h * sin_val) + (w * cos_val))
+    nH = int((h * cos_val) + (w * sin_val))
 
-            # Write the label to the output file
-            center_x = (min_x + max_x) / 2
-            center_y = (min_y + max_y) / 2
-            img_width = max_x - min_x
-            img_height = max_y - min_y
-            with open(output_labels, "a") as file:
-                file.write(f"{tile_labels[index]} {center_x} {center_y} {img_width} {img_height}\n")
+    matrix[0, 2] += (nW / 2) - cX
+    matrix[1, 2] += (nH / 2) - cY
+
+    rotated_row_img = cv2.warpAffine(row_img, matrix, (nW, nH))
+
+    # Place rotated_row_img on background
+    # Ensure it doesn't exceed background bounds; resize if needed
+    if nW > image_width or nH > image_height:
+        scale = min(image_width / nW, image_height / nH) * 0.9
+        nW = int(nW * scale)
+        nH = int(nH * scale)
+        rotated_row_img = cv2.resize(rotated_row_img, (nW, nH), interpolation=cv2.INTER_AREA)
+        matrix[0, :] *= scale
+        matrix[1, :] *= scale
+
+    start_x = (image_width - nW) // 2
+    start_y = (image_height - nH) // 2
+    
+    # Overlay rotated row image on background
+    y1, y2 = start_y, start_y + nH
+    x1, x2 = start_x, start_x + nW
+    
+    alpha_s = rotated_row_img[:, :, 3] / 255.0
+    alpha_l = 1.0 - alpha_s
+    for c in range(0, 3):
+        output_image[y1:y2, x1:x2, c] = (alpha_s * rotated_row_img[:, :, c] + \
+                                         alpha_l * output_image[y1:y2, x1:x2, c])
+
+    with open(output_labels, "a") as file:
+        for i, (xmin, ymin, xmax, ymax) in enumerate(tile_boxes):
+            # Calculate 4 corners of original tile box
+            corners = np.array([
+                [xmin, ymin, 1],
+                [xmax, ymin, 1],
+                [xmax, ymax, 1],
+                [xmin, ymax, 1]
+            ])
+            # Apply affine transform
+            rotated_corners = matrix.dot(corners.T).T
+            
+            # Translated to bounding box on output_image
+            rotated_corners[:, 0] += start_x
+            rotated_corners[:, 1] += start_y
+
+            rx_min = np.min(rotated_corners[:, 0]) / output_image.shape[1]
+            rx_max = np.max(rotated_corners[:, 0]) / output_image.shape[1]
+            ry_min = np.min(rotated_corners[:, 1]) / output_image.shape[0]
+            ry_max = np.max(rotated_corners[:, 1]) / output_image.shape[0]
+            
+            # Ensure within bounds
+            rx_min = max(0, min(1, rx_min))
+            rx_max = max(0, min(1, rx_max))
+            ry_min = max(0, min(1, ry_min))
+            ry_max = max(0, min(1, ry_max))
+
+            center_x = (rx_min + rx_max) / 2
+            center_y = (ry_min + ry_max) / 2
+            width = rx_max - rx_min
+            height = ry_max - ry_min
+            
+            file.write(f"{tile_labels[i]} {center_x} {center_y} {width} {height}\n")
         
     # Save the output image
     cv2.imwrite(output_filename, cv2.cvtColor(output_image, cv2.COLOR_RGBA2RGB))
@@ -207,10 +268,10 @@ def generate_augmented_image(grid_len=4):
 # Main function
 total_images = int(input("Enter the number of images to generate: "))
 for idx in range(total_images):
-    grid_len = random.randint(2, 8)
+    num_tiles_in_row = random.randint(5, 14)
 
-    print(f"Generating image {idx+1} with grid size {grid_len}x{grid_len}...")
-    generate_augmented_image(grid_len)
+    print(f"Generating image {idx+1} with {num_tiles_in_row} tiles in a row...")
+    generate_augmented_image(num_tiles_in_row)
     time.sleep(0.5)
 
 print("Finish generating images")
