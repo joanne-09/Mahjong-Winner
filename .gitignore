@@ -5,14 +5,10 @@ backend/src/image_recognition/yolo11n.pt
 
 # Ignore all run files EXCEPT the final model weights in train/train3
 backend/src/image_recognition/runs/detect/*
-!backend/src/image_recognition/runs/detect/train/
-!backend/src/image_recognition/runs/detect/train3/
+!backend/src/image_recognition/runs/detect/train5/
 
-backend/src/image_recognition/runs/detect/train/*
-!backend/src/image_recognition/runs/detect/train/weights/
-
-backend/src/image_recognition/runs/detect/train3/*
-!backend/src/image_recognition/runs/detect/train3/weights/
+backend/src/image_recognition/runs/detect/train5/*
+!backend/src/image_recognition/runs/detect/train5/weights/
 
 __pycache__/
 

@@ -1,7 +1,20 @@
 import os
-from .pattern_recognition.tile_recognition import tile_recognition
-from .pattern_recognition.main import check_win_condition, unpackage_breakdown_list
-from .tile_generation.main import tile_generation
+
+if __package__ in (None, ""):
+    import sys
+
+    _this_file_dir = os.path.dirname(os.path.abspath(__file__))
+    _backend_dir = os.path.dirname(_this_file_dir)
+    if _backend_dir not in sys.path:
+        sys.path.insert(0, _backend_dir)
+
+    from src.pattern_recognition.tile_recognition import tile_recognition
+    from src.pattern_recognition.main import check_win_condition, unpackage_breakdown_list
+    from src.tile_generation.main import tile_generation
+else:
+    from .pattern_recognition.tile_recognition import tile_recognition
+    from .pattern_recognition.main import check_win_condition, unpackage_breakdown_list
+    from .tile_generation.main import tile_generation
 
 others = {
     "round": "east", # the current round
@@ -56,11 +69,11 @@ def final_backend_main(file_path: str, others_settings=None):
     bing, bamboo, wan, words, bonus = tile_recognition(file_path)
 
     # Print the recognized tiles to check
-    # print(f"Bing tiles: {bing}")
-    # print(f"Bamboo tiles: {bamboo}")
-    # print(f"Wan tiles: {wan}")
-    # print(f"Word tiles: {words}")
-    # print(f"Bonus tiles: {bonus}")
+    print(f"Bing tiles: {bing}")
+    print(f"Bamboo tiles: {bamboo}")
+    print(f"Wan tiles: {wan}")
+    print(f"Word tiles: {words}")
+    print(f"Bonus tiles: {bonus}")
 
     # Generate picture of tiles
     print("Generating virtual tile image...")
@@ -82,4 +95,4 @@ def final_backend_main(file_path: str, others_settings=None):
     return final_money, final_breakdown
 
 if __name__ == "__main__":
-    final_money, final_breakdown = final_backend_main("test.png")
+    final_money, final_breakdown = final_backend_main("test2.jpg")

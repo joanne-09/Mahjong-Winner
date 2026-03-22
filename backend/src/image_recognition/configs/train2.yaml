@@ -1,9 +1,9 @@
-model: "runs/detect/train/weights/best.pt"
+model: "runs/detect/train5/weights/best.pt"
 data: "data.yaml"                # Dataset configuration
-epochs: 20                       # Increase epochs for better convergence
-batch: 32                        # Increase batch size if GPU memory allows
+epochs: 10                       # Increase epochs for better convergence
+batch: 64                        # Increase batch size if GPU memory allows
 imgsz: 640                       # Reduce image size for faster training (or keep 1024 for accuracy)
-device: "cpu"                    # Use GPU if available (change to "cpu" if no GPU)
+device: "0"                    # Use GPU if available (change to "cpu" if no GPU)
 resume: False
 
 # Optimization parameters

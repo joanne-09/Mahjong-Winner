@@ -1,7 +1,6 @@
 import os
+import argparse
 from glob import glob
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import csv
@@ -9,6 +8,8 @@ import pickle
 import random
 import datetime
 import time
+import uuid
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 
@@ -17,25 +18,33 @@ image_height = 1024
 image_width = 1024
 
 # Set the path to the background images
-background_fn = "backgrounds.pck"
-bg_path = "datasets/original/bg_img"
+background_fn = os.path.join(THIS_FOLDER, "backgrounds.pck")
+bg_path = os.path.join(THIS_FOLDER, "datasets", "original", "bg_img")
 bg_images = []
 
 # Set the path to the images and the output directory
-image_path = "datasets/original/tiles-resized"  # Path to the images
-output_path = "datasets/original/augmented"  # Path to the output directory
+image_path = os.path.join(THIS_FOLDER, "datasets", "original", "tiles-resized")  # Path to the images
+output_path = os.path.join(THIS_FOLDER, "datasets", "original", "augmented")  # Path to the output directory
+output_images_path = os.path.join(output_path, "images")
+output_labels_path = os.path.join(output_path, "labeled")
 filenames = {}  # Get the list of filenames
+tile_cache = {}
 
 # Create the output directory if it does not exist
 os.makedirs(output_path, exist_ok=True)
+os.makedirs(output_images_path, exist_ok=True)
+os.makedirs(output_labels_path, exist_ok=True)
 
 # Load background images
 if not os.path.exists(background_fn):
     print("Loading background images...")
     for subdir in glob(bg_path+"/*"):
         for f in glob(subdir+"/*.jpg"):
-            bg_images.append(mpimg.imread(f))
-    pickle.dump(bg_images, open(background_fn, 'wb'))
+            image = cv2.imread(f, cv2.IMREAD_COLOR)
+            if image is not None:
+                bg_images.append(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    with open(background_fn, "wb") as background_file:
+        pickle.dump(bg_images, background_file)
     print("Finish Loading background images")
 else:
     print("Background images already loaded")
@@ -43,12 +52,22 @@ else:
 
 class Backgrounds():
     def __init__(self, background_fn=background_fn):
-        self.backgrounds = pickle.load(open(background_fn, 'rb'))
+        with open(background_fn, "rb") as background_file:
+            raw_backgrounds = pickle.load(background_file)
+        self.backgrounds = [
+            cv2.resize(
+                cv2.cvtColor(background, cv2.COLOR_RGB2RGBA),
+                (image_width, image_height),
+                interpolation=cv2.INTER_AREA,
+            )
+            for background in raw_backgrounds
+        ]
         self.bg_num = len(self.backgrounds)
 
     def get_random(self, display=False):
-        bg = self.backgrounds[random.randint(0, self.bg_num-1)]
+        bg = random.choice(self.backgrounds)
         if display:
+            import matplotlib.pyplot as plt
             plt.imshow(bg)
             plt.show()
         return bg
@@ -57,7 +76,7 @@ class Backgrounds():
 backgrounds = Backgrounds()
 
 # Load the labels of the images
-labels = "datasets/original/tiles-data/data.csv"
+labels = os.path.join(THIS_FOLDER, "datasets", "original", "tiles-data", "data.csv")
 tile_types = {}
 with open(labels, newline='') as csvfile:
     table = csv.reader(csvfile, delimiter=' ')
@@ -74,6 +93,29 @@ with open(labels, newline='') as csvfile:
             filenames[tile_label].append(filename)
         else:
             filenames[tile_label] = [filename]
+
+# Store background image in cache
+for tile_label, tile_paths in filenames.items():
+    cached_images = []
+    for tile_filename in tile_paths:
+        tile_filepath = os.path.join(image_path, tile_filename)
+        image = cv2.imread(tile_filepath, cv2.IMREAD_UNCHANGED)
+        if image is None:
+            continue
+        if image.ndim == 2:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGBA)
+        elif image.shape[2] == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGBA)
+        elif image.shape[2] == 4:
+            image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA)
+        cached_images.append(image)
+    if cached_images:
+        tile_cache[tile_label] = cached_images
+
+tile_label_keys = list(tile_cache.keys())
+
+if not tile_label_keys:
+    raise RuntimeError("No tile images were loaded into cache. Check dataset paths and label CSV.")
 
 # Rotate the image to the given angle
 def rotate_tile(image, angle):
@@ -126,18 +168,24 @@ def generate_images(num_tiles=14):
     tile_labels = []
 
     for _ in range(num_tiles):
-        tile_label = random.choice(list(filenames.keys()))
-        tile_paths = filenames[tile_label]
-        tile_image = cv2.cvtColor(cv2.imread(
-            image_path + "/" + random.choices(tile_paths, k=1)[0])
-            , cv2.COLOR_RGB2RGBA).copy()
+        tile_label = random.choice(tile_label_keys)
+        tile_image = random.choice(tile_cache[tile_label]).copy()
         tile_images.append(tile_image)
         tile_labels.append(tile_label)
     
     return (tile_images, tile_labels)
 
 # Generate the augmented image
-def generate_augmented_image(num_tiles=14):
+def _build_output_stem(task_index=None):
+    now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    random_suffix = uuid.uuid4().hex[:8]
+    pid = os.getpid()
+    if task_index is None:
+        return f"{now_str}-{pid}-{random_suffix}"
+    return f"{now_str}-{pid}-{task_index}-{random_suffix}"
+
+
+def generate_augmented_image(num_tiles=14, output_stem=None):
     # Generate the image information
     (tile_images, tile_labels) = generate_images(num_tiles)
 
@@ -145,16 +193,12 @@ def generate_augmented_image(num_tiles=14):
     bg_image = backgrounds.get_random()
 
     # Copy the background image such that the image would not be modified
-    output_image = cv2.cvtColor(bg_image, cv2.COLOR_RGB2RGBA).copy()
-    output_image = cv2.resize(output_image, (image_width, image_height), interpolation=cv2.INTER_AREA)
+    output_image = bg_image.copy()
 
-    now = datetime.datetime.now()
-    now_str = now.strftime("%Y%m%d-%H%M%S")
-    output_filename = output_path + "/images/" + now_str + ".jpg"
-    output_labels = output_path + "/labeled/" + now_str + ".txt"
-    # create an empty txt file first
-    with open(output_labels, "w") as file:
-        pass
+    if output_stem is None:
+        output_stem = _build_output_stem()
+    output_filename = os.path.join(output_images_path, f"{output_stem}.jpg")
+    output_labels = os.path.join(output_labels_path, f"{output_stem}.txt")
 
     # Resize tiles so they fit nicely
     target_height = int(image_height / 3)
@@ -222,13 +266,14 @@ def generate_augmented_image(num_tiles=14):
     y1, y2 = start_y, start_y + nH
     x1, x2 = start_x, start_x + nW
     
-    alpha_s = rotated_row_img[:, :, 3] / 255.0
-    alpha_l = 1.0 - alpha_s
-    for c in range(0, 3):
-        output_image[y1:y2, x1:x2, c] = (alpha_s * rotated_row_img[:, :, c] + \
-                                         alpha_l * output_image[y1:y2, x1:x2, c])
+    alpha = (rotated_row_img[:, :, 3:4].astype(np.float32)) / 255.0
+    foreground = rotated_row_img[:, :, :3].astype(np.float32)
+    background = output_image[y1:y2, x1:x2, :3].astype(np.float32)
+    blended = alpha * foreground + (1.0 - alpha) * background
+    output_image[y1:y2, x1:x2, :3] = blended.astype(np.uint8)
 
-    with open(output_labels, "a") as file:
+    label_lines = []
+    with open(output_labels, "w") as file:
         for i, (xmin, ymin, xmax, ymax) in enumerate(tile_boxes):
             # Calculate 4 corners of original tile box
             corners = np.array([
@@ -260,18 +305,98 @@ def generate_augmented_image(num_tiles=14):
             width = rx_max - rx_min
             height = ry_max - ry_min
             
-            file.write(f"{tile_labels[i]} {center_x} {center_y} {width} {height}\n")
+            label_lines.append(f"{tile_labels[i]} {center_x} {center_y} {width} {height}\n")
+        file.writelines(label_lines)
         
     # Save the output image
-    cv2.imwrite(output_filename, cv2.cvtColor(output_image, cv2.COLOR_RGBA2RGB))
+    cv2.imwrite(output_filename, cv2.cvtColor(output_image, cv2.COLOR_RGBA2BGR))
 
-# Main function
-total_images = int(input("Enter the number of images to generate: "))
-for idx in range(total_images):
-    num_tiles_in_row = random.randint(5, 14)
 
-    print(f"Generating image {idx+1} with {num_tiles_in_row} tiles in a row...")
-    generate_augmented_image(num_tiles_in_row)
-    time.sleep(0.5)
+# Parallize image generateion
+# python data_augmentation.py --total-images 20000 --workers 4
+def _worker_generate_image(task_index, min_tiles, max_tiles, base_seed):
+    seed = base_seed + task_index + (os.getpid() * 9973)
+    random.seed(seed)
+    np.random.seed(seed % (2**32 - 1))
 
-print("Finish generating images")
+    num_tiles_in_row = random.randint(min_tiles, max_tiles)
+    output_stem = _build_output_stem(task_index)
+    generate_augmented_image(num_tiles_in_row, output_stem=output_stem)
+    return (task_index, num_tiles_in_row)
+
+
+def run_generation(total_images, workers=1, min_tiles=5, max_tiles=14):
+    if workers <= 1:
+        for idx in range(total_images):
+            num_tiles_in_row = random.randint(min_tiles, max_tiles)
+            print(f"Generating image {idx + 1} with {num_tiles_in_row} tiles in a row...")
+            generate_augmented_image(num_tiles_in_row, output_stem=_build_output_stem(idx + 1))
+        return
+
+    base_seed = int(time.time() * 1000) & 0x7FFFFFFF
+    print(f"Generating {total_images} images with {workers} workers...")
+    completed = 0
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        futures = [
+            executor.submit(_worker_generate_image, idx + 1, min_tiles, max_tiles, base_seed)
+            for idx in range(total_images)
+        ]
+
+        for future in as_completed(futures):
+            _, num_tiles_in_row = future.result()
+            completed += 1
+            print(f"Generated image {completed}/{total_images} ({num_tiles_in_row} tiles)")
+
+
+def benchmark_generation(total_images, workers, min_tiles, max_tiles):
+    start_single = time.perf_counter()
+    run_generation(total_images, workers=1, min_tiles=min_tiles, max_tiles=max_tiles)
+    single_duration = time.perf_counter() - start_single
+
+    start_multi = time.perf_counter()
+    run_generation(total_images, workers=workers, min_tiles=min_tiles, max_tiles=max_tiles)
+    multi_duration = time.perf_counter() - start_multi
+
+    speedup = single_duration / multi_duration if multi_duration > 0 else 0
+    print(f"Single worker time: {single_duration:.2f}s")
+    print(f"{workers} workers time: {multi_duration:.2f}s")
+    print(f"Speedup: {speedup:.2f}x")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Mahjong tile augmentation generator")
+    parser.add_argument("--total-images", type=int, default=None, help="Number of images to generate")
+    parser.add_argument("--workers", type=int, default=1, help="Number of worker processes")
+    parser.add_argument("--min-tiles", type=int, default=5, help="Minimum tiles per generated image")
+    parser.add_argument("--max-tiles", type=int, default=14, help="Maximum tiles per generated image")
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="Run sequential vs parallel benchmark using --total-images count",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    workers = max(1, args.workers)
+
+    if args.total_images is None:
+        total_images = int(input("Enter the number of images to generate: "))
+    else:
+        total_images = args.total_images
+
+    min_tiles = min(args.min_tiles, args.max_tiles)
+    max_tiles = max(args.min_tiles, args.max_tiles)
+
+    if args.benchmark:
+        benchmark_workers = workers if workers > 1 else max(2, (os.cpu_count() or 2) - 1)
+        benchmark_generation(total_images, benchmark_workers, min_tiles, max_tiles)
+    else:
+        run_generation(total_images, workers=workers, min_tiles=min_tiles, max_tiles=max_tiles)
+
+    print("Finish generating images")
+
+
+if __name__ == "__main__":
+    main()

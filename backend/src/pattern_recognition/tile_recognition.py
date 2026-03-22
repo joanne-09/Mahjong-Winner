@@ -3,7 +3,7 @@ import os
 
 # Load the model
 _this_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(_this_dir, "..", "image_recognition", "runs", "detect", "train", "weights", "best.pt")
+model_path = os.path.join(_this_dir, "..", "image_recognition", "runs", "detect", "train5", "weights", "best.pt")
 model = YOLO(model_path)
 
 def tile_recognition(image_path):
