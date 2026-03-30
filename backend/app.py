@@ -15,7 +15,7 @@ from src.models import Game, Player, RoundRecord
 load_dotenv() # Load environment variables from .env
 
 # Import your core functions from the src package
-from src.main import backend_main
+from src.main import final_backend_main
 
 # --- Flask App Configuration ---
 UPLOAD_FOLDER = 'static/uploads'
@@ -212,7 +212,7 @@ def analyze_hand():
                 "base": int(request.form.get('base', 100)),
                 "bonus": int(request.form.get('bonus', 30)),
             }
-            final_money, final_breakdown = backend_main(others, output_filename=output_filename)
+            final_money, final_breakdown = final_backend_main(image_path, others_settings=others, output_filename=output_filename)
             
             # Future Phase 3 Game Update Logic goes here (e.g. updating DB, socketio.emit)
             

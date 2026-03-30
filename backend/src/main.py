@@ -60,7 +60,7 @@ def backend_main(others_settings=None, output_filename=None):
 
 
 # Core logic of backend
-def final_backend_main(file_path: str, others_settings=None): 
+def final_backend_main(file_path: str, others_settings=None, output_filename=None): 
     if others_settings is None:
         others_settings = others
 
@@ -90,7 +90,13 @@ def final_backend_main(file_path: str, others_settings=None):
     # Generate picture of the winning tiles
     print("Generating winning tiles image...")
     tiles = unpackage_breakdown_list(final_breakdown)
-    tile_generation(tiles, output=True)
+    
+    save_path = None
+    if output_filename:
+        save_path = os.path.join(_this_dir, "..", "static", "outputs", output_filename)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        
+    tile_generation(tiles, output=True, save_path=save_path)
 
     return final_money, final_breakdown
 
