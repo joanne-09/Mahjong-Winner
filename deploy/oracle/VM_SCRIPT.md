@@ -142,6 +142,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Install OCI CLI
         run: |
           python3 -m pip install --user oci-cli
@@ -171,27 +176,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          oci compute instance list \
+          existing_id="$(
+            oci compute instance list \
             --compartment-id "$OCI_COMPARTMENT_ID" \
             --display-name "$INSTANCE_NAME" \
             --all \
-            --output json > instances.json
-
-          existing_id="$(python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          data = json.loads(Path("instances.json").read_text(encoding="utf-8"))["data"]
-          active = [
-              instance
-              for instance in data
-              if instance.get("lifecycle-state") not in ("TERMINATED", "TERMINATING")
-          ]
-          print(active[0]["id"] if active else "")
-          PY
+            --query "data[?\"lifecycle-state\"!='TERMINATED' && \"lifecycle-state\"!='TERMINATING'] | [0].id" \
+            --raw-output
           )"
+          existing_id="$(printf '%s' "$existing_id" | tr -d '\r\n')"
 
-          if [ -n "$existing_id" ]; then
+          if [ -n "$existing_id" ] && [ "$existing_id" != "null" ] && [ "$existing_id" != "None" ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "Instance already exists: $existing_id"
           else
