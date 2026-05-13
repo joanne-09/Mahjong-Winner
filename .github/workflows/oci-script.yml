@@ -27,8 +27,11 @@ jobs:
       OCI_REGION: ${{ secrets.OCI_REGION }}
       OCI_COMPARTMENT_ID: ${{ secrets.OCI_COMPARTMENT_ID }}
       OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_ID }}
+      OCI_IMAGE_ID: ${{ secrets.OCI_IMAGE_ID }}
       OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
       OCI_ADS: ${{ secrets.OCI_ADS }}
+      OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING: "True"
+      SUPPRESS_LABEL_WARNING: "True"
       SSH_PUBLIC_KEY_FILE: ${{ github.workspace }}/oci-instance-ssh.pub
       OCPUS: "2"
       MEMORY_GB: "8"
@@ -60,19 +63,33 @@ jobs:
 
           printf '%s\n' "$OCI_PRIVATE_KEY" > "$HOME/.oci/oci_api_key.pem"
           chmod 600 "$HOME/.oci/oci_api_key.pem"
+          chmod 600 "$HOME/.oci/config"
 
           printf '%s\n' "$OCI_SSH_PUBLIC_KEY" > "$SSH_PUBLIC_KEY_FILE"
 
       - name: Skip if instance already exists
         id: existing
         run: |
-          existing_id="$(
-            oci compute instance list \
-              --compartment-id "$OCI_COMPARTMENT_ID" \
-              --display-name "$INSTANCE_NAME" \
-              --all \
-              --output json |
-              python3 -c 'import json,sys; data=json.load(sys.stdin)["data"]; active=[i for i in data if i.get("lifecycle-state") not in ("TERMINATED","TERMINATING")]; print(active[0]["id"] if active else "")'
+          set -euo pipefail
+
+          oci compute instance list \
+            --compartment-id "$OCI_COMPARTMENT_ID" \
+            --display-name "$INSTANCE_NAME" \
+            --all \
+            --output json > instances.json
+
+          existing_id="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("instances.json").read_text(encoding="utf-8"))["data"]
+          active = [
+              instance
+              for instance in data
+              if instance.get("lifecycle-state") not in ("TERMINATED", "TERMINATING")
+          ]
+          print(active[0]["id"] if active else "")
+          PY
           )"
 
           if [ -n "$existing_id" ]; then
