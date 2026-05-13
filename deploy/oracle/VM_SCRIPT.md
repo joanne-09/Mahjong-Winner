@@ -250,7 +250,33 @@ Check `OCI_USER_OCID`, `OCI_TENANCY_OCID`, `OCI_FINGERPRINT`, `OCI_PRIVATE_KEY`,
 
 `NotAuthorizedOrNotFound`
 
-Usually means the API user does not have permission for the compartment, subnet, or image. If you are using a non-admin user, make sure its group can manage instances and use the VCN/subnet in that compartment.
+Usually means one of these values is wrong or inaccessible:
+
+- `OCI_SUBNET_ID` is not a subnet OCID.
+- The subnet is in a different region than `OCI_REGION`.
+- The subnet belongs to a compartment the API user cannot use.
+- The API user can list images but cannot launch instances or use the VCN/subnet.
+
+First check `OCI_SUBNET_ID`. It must start with:
+
+```text
+ocid1.subnet.
+```
+
+Do not use the VCN OCID, VNIC OCID, route table OCID, or security list OCID.
+
+For your Singapore West setup, both `OCI_REGION` and the subnet OCID should match `ap-singapore-2`.
+
+If the OCIDs are correct but you are using a non-admin API user, add IAM policy for the user's group. Replace the group and compartment names with yours:
+
+```text
+Allow group <GROUP_NAME> to manage instance-family in compartment <INSTANCE_COMPARTMENT_NAME>
+Allow group <GROUP_NAME> to use volume-family in compartment <INSTANCE_COMPARTMENT_NAME>
+Allow group <GROUP_NAME> to use virtual-network-family in compartment <NETWORK_COMPARTMENT_NAME>
+Allow group <GROUP_NAME> to read app-catalog-listing in tenancy
+```
+
+Oracle's common policy example for launching compute instances uses the same `instance-family`, `volume-family`, `virtual-network-family`, and `app-catalog-listing` permissions.
 
 `Invalid image` or `image not found`
 

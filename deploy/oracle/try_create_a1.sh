@@ -51,6 +51,33 @@ if [ -n "${OCI_REGION:-}" ]; then
   OCI_GLOBAL_ARGS+=(--region "$OCI_REGION")
 fi
 
+tmp_dir="$(mktemp -d)"
+metadata_file="$tmp_dir/metadata.json"
+shape_file="$tmp_dir/shape.json"
+result_file="$tmp_dir/launch-result.json"
+
+cleanup() {
+  rm -rf "$tmp_dir"
+}
+trap cleanup EXIT
+
+case "$OCI_COMPARTMENT_ID" in
+  ocid1.compartment.*|ocid1.tenancy.*) ;;
+  *)
+    echo "OCI_COMPARTMENT_ID should be a compartment OCID, or the tenancy OCID when using the root compartment." >&2
+    exit 2
+    ;;
+esac
+
+case "$OCI_SUBNET_ID" in
+  ocid1.subnet.*) ;;
+  *)
+    echo "OCI_SUBNET_ID must be a subnet OCID that starts with ocid1.subnet." >&2
+    echo "Do not use a VCN, VNIC, route table, or security list OCID here." >&2
+    exit 2
+    ;;
+esac
+
 if [ -z "${OCI_IMAGE_ID:-}" ]; then
   echo "OCI_IMAGE_ID is not set. Looking up newest ${IMAGE_OS} ${IMAGE_OS_VERSION} image for ${SHAPE}..."
   OCI_IMAGE_ID="$(
@@ -74,6 +101,64 @@ if [ -z "${OCI_IMAGE_ID:-}" ]; then
   echo "Using OCI_IMAGE_ID=${OCI_IMAGE_ID}"
 fi
 
+case "$OCI_IMAGE_ID" in
+  ocid1.image.*) ;;
+  *)
+    echo "OCI_IMAGE_ID must be an image OCID that starts with ocid1.image." >&2
+    exit 2
+    ;;
+esac
+
+echo "Preflight: checking image and subnet access..."
+image_error="$tmp_dir/image-error.txt"
+if ! image_name="$(
+  oci "${OCI_GLOBAL_ARGS[@]}" compute image get \
+    --image-id "$OCI_IMAGE_ID" \
+    --query 'data."display-name"' \
+    --raw-output 2>"$image_error"
+)"; then
+  echo "Cannot access OCI_IMAGE_ID=${OCI_IMAGE_ID}." >&2
+  echo "Make sure the image belongs to OCI_REGION=${OCI_REGION:-default profile region} and your API user can read instance images." >&2
+  cat "$image_error" >&2
+  exit 2
+fi
+echo "Preflight image: ${image_name}"
+
+subnet_error="$tmp_dir/subnet-error.txt"
+if ! subnet_json="$(
+  oci "${OCI_GLOBAL_ARGS[@]}" network subnet get \
+    --subnet-id "$OCI_SUBNET_ID" \
+    --output json 2>"$subnet_error"
+)"; then
+  echo "Cannot access OCI_SUBNET_ID=${OCI_SUBNET_ID}." >&2
+  echo "Most likely causes: wrong subnet OCID, subnet is in another region, or API user lacks use/read access to the subnet/VCN." >&2
+  cat "$subnet_error" >&2
+  exit 2
+fi
+
+mapfile -t SUBNET_DETAILS < <(
+  printf '%s\n' "$subnet_json" |
+    python3 -c 'import json,sys; d=json.load(sys.stdin)["data"]; print(d.get("display-name") or ""); print(d.get("compartment-id") or ""); print(d.get("availability-domain") or "regional"); print(str(d.get("prohibit-public-ip-on-vnic")).lower())'
+)
+subnet_name="${SUBNET_DETAILS[0]:-}"
+subnet_compartment="${SUBNET_DETAILS[1]:-}"
+subnet_ad="${SUBNET_DETAILS[2]:-regional}"
+subnet_prohibit_public_ip="${SUBNET_DETAILS[3]:-}"
+
+echo "Preflight subnet: ${subnet_name:-unnamed} (${subnet_ad})"
+echo "Preflight subnet compartment: ${subnet_compartment:-unknown}"
+
+if [ "$subnet_prohibit_public_ip" = "true" ]; then
+  echo "This subnet is private or prohibits public IPv4 assignment, but the script launches with --assign-public-ip true." >&2
+  echo "Use a public subnet, or change the script to launch without a public IP and use a bastion/VPN." >&2
+  exit 2
+fi
+
+if [ "$subnet_ad" != "regional" ] && [ -z "${OCI_ADS:-}" ]; then
+  OCI_ADS="$subnet_ad"
+  echo "Subnet is AD-specific; limiting launch attempts to ${OCI_ADS}."
+fi
+
 if [ -n "${OCI_ADS:-}" ]; then
   IFS=',' read -r -a AD_NAMES <<< "$OCI_ADS"
 else
@@ -88,16 +173,6 @@ if [ "${#AD_NAMES[@]}" -eq 0 ]; then
   echo "No availability domains found. Set OCI_ADS manually if needed." >&2
   exit 2
 fi
-
-tmp_dir="$(mktemp -d)"
-metadata_file="$tmp_dir/metadata.json"
-shape_file="$tmp_dir/shape.json"
-result_file="$tmp_dir/launch-result.json"
-
-cleanup() {
-  rm -rf "$tmp_dir"
-}
-trap cleanup EXIT
 
 export SSH_PUBLIC_KEY_FILE
 python3 - <<'PY' > "$metadata_file"
@@ -166,6 +241,10 @@ while true; do
     fi
 
     echo "OCI returned a non-capacity error. Stopping so you can fix the config:"
+    if printf '%s\n' "$output" | grep -q 'NotAuthorizedOrNotFound'; then
+      echo "Hint: launch_instance NotAuthorizedOrNotFound usually means the subnet is not usable from this region/compartment, or the API user lacks launch/network/volume permissions." >&2
+      echo "Check OCI_SUBNET_ID first, then IAM policies for instance-family, virtual-network-family, volume-family, and app-catalog-listing." >&2
+    fi
     printf '%s\n' "$output" >&2
     exit "$exit_code"
   done
