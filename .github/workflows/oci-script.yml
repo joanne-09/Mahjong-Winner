@@ -1,0 +1,98 @@
+name: Try Create OCI A1 VM
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+concurrency:
+  group: oci-script
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  try-create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      INSTANCE_NAME: ${{ secrets.OCI_INSTANCE_NAME || 'mahjong-winner-a1' }}
+      OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
+      OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+      OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+      OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+      OCI_REGION: ${{ secrets.OCI_REGION }}
+      OCI_COMPARTMENT_ID: ${{ secrets.OCI_COMPARTMENT_ID }}
+      OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_ID }}
+      OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+      OCI_ADS: ${{ secrets.OCI_ADS }}
+      SSH_PUBLIC_KEY_FILE: ${{ github.workspace }}/oci-instance-ssh.pub
+      OCPUS: "2"
+      MEMORY_GB: "8"
+      BOOT_VOLUME_GB: "100"
+      MAX_ATTEMPTS: "1"
+      SLEEP_SECONDS: "0"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install OCI CLI
+        run: |
+          python3 -m pip install --user oci-cli
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure OCI CLI
+        run: |
+          mkdir -p "$HOME/.oci"
+
+          cat > "$HOME/.oci/config" <<EOF
+          [DEFAULT]
+          user=${OCI_USER_OCID}
+          fingerprint=${OCI_FINGERPRINT}
+          tenancy=${OCI_TENANCY_OCID}
+          region=${OCI_REGION}
+          key_file=${HOME}/.oci/oci_api_key.pem
+          EOF
+
+          printf '%s\n' "$OCI_PRIVATE_KEY" > "$HOME/.oci/oci_api_key.pem"
+          chmod 600 "$HOME/.oci/oci_api_key.pem"
+
+          printf '%s\n' "$OCI_SSH_PUBLIC_KEY" > "$SSH_PUBLIC_KEY_FILE"
+
+      - name: Skip if instance already exists
+        id: existing
+        run: |
+          existing_id="$(
+            oci compute instance list \
+              --compartment-id "$OCI_COMPARTMENT_ID" \
+              --display-name "$INSTANCE_NAME" \
+              --all \
+              --output json |
+              python3 -c 'import json,sys; data=json.load(sys.stdin)["data"]; active=[i for i in data if i.get("lifecycle-state") not in ("TERMINATED","TERMINATING")]; print(active[0]["id"] if active else "")'
+          )"
+
+          if [ -n "$existing_id" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Instance already exists: $existing_id"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No active instance named $INSTANCE_NAME found."
+          fi
+
+      - name: Try to create A1 instance once
+        if: steps.existing.outputs.exists != 'true'
+        run: |
+          chmod +x deploy/oracle/try_create_a1.sh
+          ./deploy/oracle/try_create_a1.sh
+
+      - name: Disable retry workflow after success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow disable oci-script.yml --repo "$GITHUB_REPOSITORY"
+          echo "Disabled oci-script.yml because the OCI instance already exists or was created successfully."

@@ -14,4 +14,12 @@ __pycache__/
 
 .vscode/
 
-backend/.env
+backend/var/
+backend/static/uploads/
+backend/static/outputs/
+frontend/dist/
+
+.env
+*.pem
+*.key
+*.pub

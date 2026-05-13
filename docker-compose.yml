@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/app.db}
+      MEDIA_ROOT: /data/media
+      UPLOAD_FOLDER: /data/media/uploads
+      OUTPUT_FOLDER: /data/media/outputs
+      MEDIA_RETENTION_SECONDS: ${MEDIA_RETENTION_SECONDS:-3600}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-8}
+    volumes:
+      - mahjong_data:/data
+    expose:
+      - "5000"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: deploy/nginx/Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_BASE_PATH: "/"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mahjong_data:

@@ -2,6 +2,8 @@ import os
 import cv2
 
 _this_dir = os.path.dirname(os.path.abspath(__file__))
+_backend_dir = os.path.abspath(os.path.join(_this_dir, "..", ".."))
+_media_root = os.path.abspath(os.getenv("MEDIA_ROOT", os.path.join(_backend_dir, "var", "media")))
 index = ['blank',
         'b_one','b_two','b_three','b_four','b_five','b_six','b_seven','b_eight','b_nine',
         's_one','s_two','s_three','s_four','s_five','s_six','s_seven','s_eight','s_nine',
@@ -9,8 +11,8 @@ index = ['blank',
         'east','south','west','north','zong','fa','bai',
         'spring','summer','autumn','winter','plum','orchid','chrysanthemum','bamboo',]
 tile_path = os.path.join(_this_dir, "assets/")
-output_path = os.path.join(_this_dir, "../../static/outputs/output.png")
-debug_path = os.path.join(_this_dir, "debug.png")
+output_path = os.getenv("OUTPUT_PATH", os.path.join(_media_root, "outputs", "output.png"))
+debug_path = os.getenv("DEBUG_OUTPUT_PATH", os.path.join(_media_root, "debug", "debug.png"))
 
 def tile_generation(tiles, output=False, save_path=None):
     # Load images based on the tile types
@@ -29,9 +31,11 @@ def tile_generation(tiles, output=False, save_path=None):
         if output:
             # Save the final image to the specified output path
             final_output_path = save_path if save_path else output_path
+            os.makedirs(os.path.dirname(final_output_path), exist_ok=True)
             cv2.imwrite(final_output_path, final_image)
-            print("Generated image saved as", output_path)
+            print("Generated image saved as", final_output_path)
         else:
+            os.makedirs(os.path.dirname(debug_path), exist_ok=True)
             cv2.imwrite(debug_path, final_image)
             print("Generated image saved as", debug_path)
     else:
